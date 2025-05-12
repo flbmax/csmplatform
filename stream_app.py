@@ -9,9 +9,16 @@ import numpy as np
 st.title("Anticipation Churn")
 st.sidebar.info('🚀 SportEasy Customer Success Plaform')
 
-data = pd.read_excel('health_score_attendance_criteria.xlsx')
-data = data.rename(columns={"traj_month.traj_end": "traj_end", "[traj_month.attendance_ratio]": "attendance"})
-data = data.rename(columns={"traj_month.club_id": "club_id", "traj_month.traj_start": "traj_start"})
+data_attendance = pd.read_excel('health_score_attendance_criteria.xlsx')
+data_attendance = data_attendance.rename(columns={"traj_month.traj_end": "traj_end", "[traj_month.attendance_ratio]": "attendance"})
+data_attendance = data_attendance.rename(columns={"traj_month.club_id": "club_id", "traj_month.traj_start": "traj_start"})
+
+data_message = pd.read_excel('health_score_club_message_criteria.xlsx')
+
+to_drop = data_message.drop_duplicates(['club_id','date_start','traj_start','traj_end'])
+to_drop = to_drop.drop([237970,237971,237972,237973,237974])
+
+data = data_attendance.merge(to_drop[['club_id','date_start','club_message']], left_on = ['club_id','date_start'], right_on = ['club_id','date_start'])
 
 club_id = st.sidebar.selectbox(
         'label',
@@ -44,17 +51,19 @@ with tab1:
 
 with tab2:
     row1 = st.columns(2)
-    row2= st.columns(2)
-    row3= st.columns(2)
-    row4= st.columns(2)
-    
-    for col in row1 + row2 + row3 + row4:
-        tile = col.line_chart(chart_data, 
+    tile1 = row1[0].line_chart(chart_data, 
                               x="month_start", 
                               y="attendance", 
                               color="#94E3A8",
                               x_label="attendance",
                               y_label="")
+    tile2 = row1[1].line_chart(chart_data, 
+                              x="month_start", 
+                              y="num_message", 
+                              color="#94E3A8",
+                              x_label="num_message",
+                              y_label="")
+    
     
 
     #chart_data = data_club[['month_start','game_score']]
