@@ -35,7 +35,7 @@ data_club['size'] = 10000*data_club['attendance']
 tab1, tab2 = st.tabs(["Health Score", "Criteria Evolution"])
 
 with tab1:
-    chart_data = data_club[['month_start','attendance','size']]
+    chart_data = data_club[['month_start','attendance','club_message','size']]
     #st.line_chart(chart_data, x="month_start", y="attendance", color="#94E3A8")
     point_selector = alt.selection_point("point_selection")
     interval_selector = alt.selection_interval("interval_selection")
@@ -59,9 +59,9 @@ with tab2:
                               y_label="")
     tile2 = row1[1].line_chart(chart_data, 
                               x="month_start", 
-                              y="num_message", 
+                              y="club_message", 
                               color="#94E3A8",
-                              x_label="num_message",
+                              x_label="club_message",
                               y_label="")
     
     
