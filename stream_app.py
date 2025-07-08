@@ -4,21 +4,31 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import altair as alt
 import numpy as np
-#from pycaret.classification import *
+import time
+import plotly.express as px
+import datetime
+from pycaret.classification import *
+
+# load data
+#data = pd.read_excel('data_health_score.xlsx')
+# to accelerate the speed of the app
+data = pd.read_parquet('data_health_score.parquet', engine='pyarrow')
+
+_='''
+# classification
+s = setup(data[['club_id','login','game_score','attendance','collections','database','message_system','team_message','activation','churn']], target = 'churn', ignore_features = ['club_id'])
+# pycaret by default train on 70%
+best_model = compare_models(sort='F1')
+tuned_best_model = tune_model(best_model)
+plot_model(tuned_best_model, plot = 'feature')
+plot_model(tuned_best_model, plot = 'confusion_matrix')
+'''
+
 
 st.title("Anticipation Churn")
-st.sidebar.info('🚀 SportEasy Customer Success Plaform')
+st.sidebar.info('🚀 SportEasy Customer Success Platform')
 
-data_attendance = pd.read_excel('health_score_attendance_criteria.xlsx')
-data_attendance = data_attendance.rename(columns={"traj_month.traj_end": "traj_end", "[traj_month.attendance_ratio]": "attendance"})
-data_attendance = data_attendance.rename(columns={"traj_month.club_id": "club_id", "traj_month.traj_start": "traj_start"})
 
-data_message = pd.read_excel('health_score_club_message_criteria.xlsx')
-
-to_drop = data_message.drop_duplicates(['club_id','date_start','traj_start','traj_end'])
-to_drop = to_drop.drop([237970,237971,237972,237973,237974])
-
-data = data_attendance.merge(to_drop[['club_id','date_start','club_message']], left_on = ['club_id','date_start'], right_on = ['club_id','date_start'])
 
 club_id = st.sidebar.selectbox(
         'label',
@@ -29,43 +39,93 @@ club_id = st.sidebar.selectbox(
 
 
 data_club = data.loc[(data.club_id == club_id)]
-data_club['month_start'] = [date[:7] for date in data_club['date_start']]
-data_club['size'] = 10000*data_club['attendance']
-
 tab1, tab2 = st.tabs(["Health Score", "Criteria Evolution"])
 
 with tab1:
-    chart_data = data_club[['month_start','attendance','club_message','size']]
-    #st.line_chart(chart_data, x="month_start", y="attendance", color="#94E3A8")
-    point_selector = alt.selection_point("point_selection")
-    interval_selector = alt.selection_interval("interval_selection")
-    chart = (
-        alt.Chart(chart_data)
-        .mark_line()
-        .encode(x="month_start", 
-                y="attendance", 
-                tooltip=["month_start", "attendance"]).add_params(point_selector, interval_selector)
-        )
-    
-    st.altair_chart(chart)
 
+    fig = px.line(data_club, x="month_start", y="health_score", line_shape='spline')
+    fig.update_yaxes(range=[0, 100]) 
+
+    signing_date = data_club["month_traj_start"].unique()[0]
+    # force to convert to ms due to a plotly known bug
+    fig.add_vline(x=datetime.datetime.strptime(signing_date, "%Y-%m").timestamp() * 1000, 
+                  line_width=3, 
+                  line_dash="dash", 
+                  line_color="green",
+                  annotation_text="signing date",
+                  annotation_font_color="green",
+                  annotation_position="top")
+    
+    if data_club["churn"].unique()[0] == 1:
+        churn_date = data_club["month_traj_end"].unique()[0]
+        fig.add_vline(x=datetime.datetime.strptime(churn_date, "%Y-%m").timestamp() * 1000, 
+                      line_width=3, 
+                      line_dash="dash", 
+                      line_color="red",
+                      annotation_text= "churn date",
+                      annotation_font_color="red",
+                      annotation_position="top")
+    
+    fig.update_traces(mode='lines+markers', hovertemplate='%{x}<br>%{y}')
+    
+    st.plotly_chart(fig, use_container_width=False)
+    
+    
 with tab2:
     row1 = st.columns(2)
-    tile1 = row1[0].line_chart(chart_data, 
+    
+    tile1 = row1[0].line_chart(data_club, 
+                              x="month_start", 
+                              y="activation", 
+                              color="#94E3A8",
+                              x_label="activation",
+                              y_label="")
+    
+    tile2 = row1[1].line_chart(data_club, 
                               x="month_start", 
                               y="attendance", 
                               color="#94E3A8",
                               x_label="attendance",
                               y_label="")
-    tile2 = row1[1].line_chart(chart_data, 
+    row2 = st.columns(2)
+    tile3 = row1[0].line_chart(data_club, 
                               x="month_start", 
-                              y="club_message", 
+                              y="database", 
                               color="#94E3A8",
-                              x_label="club_message",
+                              x_label="database",
+                              y_label="")
+    tile4 = row1[1].line_chart(data_club, 
+                              x="month_start", 
+                              y="game_score", 
+                              color="#94E3A8",
+                              x_label="game_score",
                               y_label="")
     
+    row3 = st.columns(2)
+    tile5 = row1[0].line_chart(data_club, 
+                              x="month_start", 
+                              y="login", 
+                              color="#94E3A8",
+                              x_label="login",
+                              y_label="")
+    tile6 = row1[1].line_chart(data_club, 
+                              x="month_start", 
+                              y="message_system", 
+                              color="#94E3A8",
+                              x_label="message_system",
+                              y_label="")
     
-
-    #chart_data = data_club[['month_start','game_score']]
-    #st.line_chart(chart_data, x="month_start", y="game_score", color="#94E3A8")
+    row4 = st.columns(2)
+    tile7 = row1[0].line_chart(data_club, 
+                              x="month_start", 
+                              y="team_message", 
+                              color="#94E3A8",
+                              x_label="team_message",
+                              y_label="")
     
+    tile8 = row1[0].line_chart(data_club, 
+                              x="month_start", 
+                              y="collections", 
+                              color="#94E3A8",
+                              x_label="collections",
+                              y_label="")
