@@ -7,7 +7,7 @@ import numpy as np
 import time
 import plotly.express as px
 import datetime
-from pycaret.classification import *
+#from pycaret.classification import *
 
 # load data
 #data = pd.read_excel('data_health_score.xlsx')
