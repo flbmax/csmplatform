@@ -9,6 +9,7 @@ import plotly.express as px
 import datetime
 #from pycaret.classification import *
 
+st.set_page_config(page_title="SE CSM Platform", page_icon='sporteasy_logo.png', layout="wide")
 # load data
 #data = pd.read_excel('data_health_score.xlsx')
 # to accelerate the speed of the app
