@@ -1,2 +1,4 @@
 matplotlib
 plotly.express
+sklearn
+scipy
