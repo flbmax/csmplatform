@@ -1,3 +1,2 @@
 matplotlib
 plotly.express
-pycaret.classification
